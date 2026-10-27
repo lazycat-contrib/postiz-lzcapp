@@ -1,0 +1,44 @@
+version: 1
+
+project:
+  root: .
+  build_config: lzc-build.yml
+  package_file: package.yml
+  output: dist/application.lpk
+  target_arch: amd64
+
+update:
+  strategy: publish
+  allow_downgrade: false
+  version_source:
+    # postiz 只发 latest / 时间戳标签，没有 SemVer release；固定用 latest，
+    # digest 变化时 bump patch
+    type: image
+    image: postiz
+    bump: patch
+
+build:
+  run_buildscript: false
+
+images:
+  - id: postiz
+    target: service
+    service: postiz
+    source: ghcr.io/gitroomhq/postiz-app
+    channel: custom
+    sort: created
+    # 只盯 latest（上游唯一的稳定标签），digest 变了就 bump patch
+    tag_regex: '^latest$'
+    delivery:
+      # 镜像模式：不转存懒猫官方源，用公共加速源，要求 digest 与上游一致
+      mode: mirror
+      require_digest_match: true
+
+stores:
+  official:
+    enabled: false
+  private:
+    enabled: true
+    skip_if_version_exists: true
+    name: Postiz
+    summary: "Postiz 懒猫微服打包：自托管社交媒体排期，一个日历管多平台定时发布。"

@@ -1,0 +1,135 @@
+application:
+  subdomain: postiz
+  multi_instance: false
+  entries:
+    - id: main
+      title: "Postiz"
+      path: /
+  upstreams:
+    - location: /
+      backend: http://postiz:5000
+  # 排期日历的公开访客链接（public invites）需要免登录可达
+  public_path:
+    - /
+  injects:
+    # 商店硬性要求：有上传/下载功能的应用必须接入文件选择器拦截
+    - id: open-save-chooser
+      on: browser
+      when:
+        - /*
+      do:
+        - src: file:///lzcapp/pkg/content/lazycat-injects/lzc-file-chooser-inject.js
+
+services:
+  postiz:
+    # 镜像模式：官方 ghcr 镜像走公共加速；由 Action 的 mirror 交付模式管理
+    # upstream: ghcr.io/gitroomhq/postiz-app:latest
+    image: ghcr.1ms.run/gitroomhq/postiz-app:latest
+    environment:
+      # 对外地址：用懒猫应用域名，运行时自动注入
+      MAIN_URL: 'https://{{ .S.AppDomain }}'
+      FRONTEND_URL: 'https://{{ .S.AppDomain }}'
+      NEXT_PUBLIC_BACKEND_URL: 'https://{{ .S.AppDomain }}/api'
+      BACKEND_INTERNAL_URL: 'http://localhost:3000'
+      JWT_SECRET: '{{ stable_secret "postiz#jwt_secret" }}'
+      DATABASE_URL: 'postgresql://postiz:{{ stable_secret "postiz#db_password" }}@postiz-postgres:5432/postiz-db-local'
+      REDIS_URL: 'redis://postiz-redis:6379'
+      TEMPORAL_ADDRESS: 'temporal:7233'
+      IS_GENERAL: 'true'
+      DISABLE_REGISTRATION: 'false'
+      STORAGE_PROVIDER: 'local'
+      UPLOAD_DIRECTORY: '/uploads'
+      NEXT_PUBLIC_UPLOAD_DIRECTORY: '/uploads'
+    healthcheck:
+      # postiz 自带 healthcheck 用的 curl，容器里有
+      test:
+        - CMD-SHELL
+        - curl --fail --silent http://127.0.0.1:5000/ > /dev/null || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    depends_on:
+      - postiz-postgres
+      - postiz-redis
+      - temporal
+    binds:
+      - /lzcapp/var/config:/config
+      - /lzcapp/var/uploads:/uploads
+
+  postiz-postgres:
+    # postgres 官方镜像走公共加速源
+    # upstream: docker.io/library/postgres:17-alpine
+    image: docker.1ms.run/library/postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: '{{ stable_secret "postiz#db_password" }}'
+      POSTGRES_USER: postiz
+      POSTGRES_DB: postiz-db-local
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U postiz -d postiz-db-local
+      interval: 10s
+      timeout: 3s
+      retries: 30
+    binds:
+      - /lzcapp/var/pgdata:/var/lib/postgresql/data
+
+  postiz-redis:
+    # upstream: docker.io/library/redis:7.2
+    image: docker.1ms.run/library/redis:7.2
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - redis-cli ping
+      interval: 10s
+      timeout: 3s
+      retries: 30
+    binds:
+      - /lzcapp/var/redis:/data
+
+  # ---- Temporal 任务队列（postiz 的调度核心依赖）----
+  temporal-postgres:
+    # upstream: docker.io/library/postgres:16
+    image: docker.1ms.run/library/postgres:16
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U temporal
+      interval: 10s
+      timeout: 3s
+      retries: 30
+    binds:
+      - /lzcapp/var/temporal-pgdata:/var/lib/postgresql/data
+
+  temporal:
+    # upstream: docker.io/temporalio/auto-setup:1.28.1
+    image: docker.1ms.run/temporalio/auto-setup:1.28.1
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=temporal-postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - ENABLE_ES=false
+    depends_on:
+      - temporal-postgres
+    binds:
+      - /lzcapp/pkg/content/dynamicconfig:/etc/temporal/config/dynamicconfig
+
+usage: |
+  Postiz 是自托管的社交媒体排期工具：在一个日历里策划、创作并定时发布多平台内容。
+
+  【安装即用】
+  数据库、Redis、Temporal 队列都在应用内自动拉起，无需手动配置。
+  打开应用域名即进入 Postiz 界面，首次使用请注册一个本地账号（注册后可在设置里关闭注册）。
+
+  【数据】
+  Postis 数据库与配置在 /lzcapp/var，升级不会丢失。
+
+  【关于镜像】
+  本应用使用公共镜像加速源（1ms.run）直接拉取上游官方镜像，未转存懒猫官方镜像源。

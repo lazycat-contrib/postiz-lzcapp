@@ -1,0 +1,22 @@
+package: community.lazycat.app.postiz
+version: 1.0.0
+name: Postiz
+description: Self-hosted social media scheduling tool — plan, create and schedule posts across platforms from one calendar.
+min_os_version: 1.5.0
+homepage: https://github.com/gitroomhq/postiz-app
+author: gitroomhq
+license: AGPL-3.0
+# upstream: ghcr.io/gitroomhq/postiz-app:latest @ 2026-10-27
+locales:
+  zh:
+    name: "Postiz"
+    description: "自托管社交媒体排期工具：在一个日历里完成跨平台的帖子策划、创作与定时发布。"
+    entries.main.title: "Postiz"
+  zh_CN:
+    name: "Postiz"
+    description: "自托管社交媒体排期工具：在一个日历里完成跨平台的帖子策划、创作与定时发布。"
+    entries.main.title: "Postiz"
+  en:
+    name: "Postiz"
+    description: "Self-hosted social media scheduling tool — plan, create and schedule posts across platforms."
+    entries.main.title: "Postiz"
