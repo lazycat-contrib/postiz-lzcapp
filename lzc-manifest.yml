@@ -24,7 +24,7 @@ services:
   postiz:
     # 镜像模式：官方 ghcr 镜像走公共加速；由 Action 的 mirror 交付模式管理
     # upstream: ghcr.io/gitroomhq/postiz-app:latest
-    image: ghcr.1ms.run/gitroomhq/postiz-app:latest
+    image: ghcr.1ms.run/gitroomhq/postiz-app:latest@sha256:3e2facf0c1ffdfe07b31cebdc5b850767721cb40a7a389dd07485f8e381bb49f
     environment:
       # 对外地址：用懒猫应用域名，运行时自动注入
       MAIN_URL: 'https://{{ .S.AppDomain }}'
