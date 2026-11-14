@@ -19,12 +19,11 @@ application:
         - /*
       do:
         - src: file:///lzcapp/pkg/content/lazycat-injects/lzc-file-chooser-inject.js
-
 services:
   postiz:
     # 镜像模式：官方 ghcr 镜像走公共加速；由 Action 的 mirror 交付模式管理
-    # upstream: ghcr.io/gitroomhq/postiz-app:latest
-    image: ghcr.1ms.run/gitroomhq/postiz-app:latest@sha256:3e2facf0c1ffdfe07b31cebdc5b850767721cb40a7a389dd07485f8e381bb49f
+    # upstream: ghcr.io/gitroomhq/postiz-app:latest@sha256:2ddef321724f303f679f8610e4b09dd0fd77fbd5f4e5a77f012a36f9f8d43395
+    image: ghcr.1ms.run/gitroomhq/postiz-app:latest@sha256:2ddef321724f303f679f8610e4b09dd0fd77fbd5f4e5a77f012a36f9f8d43395
     environment:
       # 对外地址：用懒猫应用域名，运行时自动注入
       MAIN_URL: 'https://{{ .S.AppDomain }}'
@@ -56,7 +55,6 @@ services:
     binds:
       - /lzcapp/var/config:/config
       - /lzcapp/var/uploads:/uploads
-
   postiz-postgres:
     # postgres 官方镜像走公共加速源
     # upstream: docker.io/library/postgres:17-alpine
@@ -74,7 +72,6 @@ services:
       retries: 30
     binds:
       - /lzcapp/var/pgdata:/var/lib/postgresql/data
-
   postiz-redis:
     # upstream: docker.io/library/redis:7.2
     image: docker.1ms.run/library/redis:7.2
@@ -87,7 +84,6 @@ services:
       retries: 30
     binds:
       - /lzcapp/var/redis:/data
-
   # ---- Temporal 任务队列（postiz 的调度核心依赖）----
   temporal-postgres:
     # upstream: docker.io/library/postgres:16
@@ -104,7 +100,6 @@ services:
       retries: 30
     binds:
       - /lzcapp/var/temporal-pgdata:/var/lib/postgresql/data
-
   temporal:
     # upstream: docker.io/temporalio/auto-setup:1.28.1
     image: docker.1ms.run/temporalio/auto-setup:1.28.1
@@ -120,7 +115,6 @@ services:
       - temporal-postgres
     binds:
       - /lzcapp/pkg/content/dynamicconfig:/etc/temporal/config/dynamicconfig
-
 usage: |
   Postiz 是自托管的社交媒体排期工具：在一个日历里策划、创作并定时发布多平台内容。
 

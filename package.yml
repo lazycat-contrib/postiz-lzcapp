@@ -1,5 +1,5 @@
 package: community.lazycat.app.postiz
-version: 1.0.0
+version: 1.0.1
 name: Postiz
 description: Self-hosted social media scheduling tool — plan, create and schedule posts across platforms from one calendar.
 min_os_version: 1.5.0
